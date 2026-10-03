@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0056b3">
+    <title>Bản Đồ Số Xã Cô Tô</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+        body { background-color: #f4f6f9; color: #333; padding: 12px; max-width: 640px; margin: 0 auto; -webkit-tap-highlight-color: transparent; }
+
+        header { text-align: center; margin-bottom: 15px; background: #0056b3; color: white; padding: 18px 12px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,86,179,0.15); }
+        header h1 { font-size: 19px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        header p { font-size: 13px; opacity: 0.9; }
+
+        .filter-box { margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-box input { flex: 1 1 100%; min-width: 0; }
+        .filter-box select { flex: 1 1 140px; min-width: 0; background-image: linear-gradient(45deg, transparent 50%, #666 50%), linear-gradient(135deg, #666 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px !important; }
+        .filter-box input, .filter-box select { padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; outline: none; background: white; -webkit-appearance: none; appearance: none; border-radius: 8px; }
+        .result-count { font-size: 14px; color: #666; margin-bottom: 12px; }
+
+        .location-list { display: flex; flex-direction: column; gap: 15px; }
+
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 8px rgba(0,0,0,0.08); border: 1px solid #eee; border-top: 4px solid #0056b3; }
+        .card-img { width: 100%; height: 210px; object-fit: cover; display: block; background-color: #e0e0e0; }
+        .card-body { padding: 15px; }
+        .card h3 { font-size: 18px; line-height: 1.3; color: #0056b3; margin-bottom: 6px; }
+
+        .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .badge { background: #e3f2fd; color: #0d47a1; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 4px; }
+        .badge-ap { background: #fff3cd; color: #856404; }
+
+        .info-item { font-size: 14px; word-break: break-word; color: #444; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.4; }
+        .desc { font-size: 14px; color: #666; margin-top: 8px; line-height: 1.4; }
+
+        .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+        .btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; color: white; text-decoration: none; padding: 12px 8px; min-height: 46px; border-radius: 8px; font-size: 15px; font-weight: bold; text-align: center; }
+        .btn-maps { background-color: #28a745; }
+        .btn-maps:active { background-color: #1e7e34; }
+        .btn-dir { background-color: #0056b3; }
+        .btn-dir:active { background-color: #004085; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📍 BẢN ĐỒ SỐ XÃ CÔ TÔ</h1>
+        <p>Tra cứu thông tin, mô hình & chỉ đường tiện lợi</p>
+    </header>
+
+    <!-- Bộ lọc & Tìm kiếm -->
+    <div class="filter-box">
+        <input type="text" id="searchInput" placeholder="Tìm tên địa điểm..." oninput="filterData()">
+        <select id="apFilter" onchange="filterData()">
+            <option value="">Tất cả các Ấp</option>
+        </select>
+        <select id="categoryFilter" onchange="filterData()">
+            <option value="">Tất cả loại hình</option>
+        </select>
+    </div>
+    <div class="result-count" id="resultCount"></div>
+
+    <!-- Danh sách địa điểm -->
+    <div class="location-list" id="locationList"></div>
+
+    <script>
+        // =========================================================================
+        // DỮ LIỆU ĐỊA ĐIỂM
+        // =========================================================================
+        const locations = [
+          { id: 1, image: "images/to-binh.jpg", imagePos: "50% 50%", name: "Văn phòng Ấp Tô Bình", ap: "Tô Bình", category: "Cơ quan hành chính", coords: "10°21'37.9\"N 105°01'06.9\"E", latLng: [10.360528, 105.018583], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tô Bình.", mapUrl: "https://www.google.com/maps?q=10.360528,105.018583" },
+          { id: 2, image: "images/to-an.jpg", imagePos: "50% 38%", name: "Văn phòng Ấp Tô An", ap: "Tô An", category: "Cơ quan hành chính", coords: "10°21'18.3\"N 105°00'03.2\"E", latLng: [10.355083, 105.000889], address: "Ấp Tô An, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tô An.", mapUrl: "https://www.google.com/maps?q=10.355083,105.000889" },
+          { id: 3, image: "images/to-loi.jpg", imagePos: "50% 35%", name: "Văn phòng Ấp Tô Lợi", ap: "Tô Lợi", category: "Cơ quan hành chính", coords: "10°23'14.7\"N 105°00'40.8\"E", latLng: [10.387417, 105.011333], address: "Ấp Tô Lợi, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tô Lợi.", mapUrl: "https://www.google.com/maps?q=10.387417,105.011333" },
+          { id: 4, image: "images/to-phuoc.jpg", imagePos: "50% 55%", name: "Văn phòng Ấp Tô Phước", ap: "Tô Phước", category: "Cơ quan hành chính", coords: "10°19'56.7\"N 105°01'46.3\"E", latLng: [10.332417, 105.029528], address: "Ấp Tô Phước, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tô Phước.", mapUrl: "https://www.google.com/maps?q=10.332417,105.029528" },
+          { id: 5, image: "images/soc-triet.jpg", imagePos: "50% 50%", name: "Văn phòng ấp Sóc Triết", ap: "Sóc Triết", category: "Cơ quan hành chính", coords: "10°21'45.2\"N 105°00'57.8\"E", latLng: [10.362556, 105.016056], address: "Ấp Sóc Triết, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Sóc Triết.", mapUrl: "https://www.google.com/maps?q=10.362556,105.016056" },
+          { id: 6, image: "images/hue-duc.jpg", imagePos: "50% 40%", name: "Văn phòng Ấp Huệ Đức", ap: "Huệ Đức", category: "Cơ quan hành chính", coords: "10°21'50.4\"N 105°02'29.3\"E", latLng: [10.364, 105.041472], address: "Ấp Huệ Đức, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Huệ Đức.", mapUrl: "https://www.google.com/maps?q=10.364,105.041472" },
+          { id: 7, name: "Văn Phòng Ấp Tân Tuyến", ap: "Tân Tuyến", category: "Cơ quan hành chính", coords: "10°21'50.4\"N 105°02'29.3\"E", latLng: [10.364, 105.041472], address: "Ấp Tân Tuyến, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tân Tuyến.", mapUrl: "https://www.google.com/maps?q=10.364,105.041472" },
+          { id: 8, image: "images/tan-duc.jpg", imagePos: "50% 40%", name: "Văn Phòng Ấp Tân Đức", ap: "Tân Đức", category: "Cơ quan hành chính", coords: "10°19'37.4\"N 105°04'31.6\"E", latLng: [10.327056, 105.075444], address: "Ấp Tân Đức, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tân Đức.", mapUrl: "https://www.google.com/maps?q=10.327056,105.075444" },
+          { id: 9, image: "images/tan-lap.jpg", imagePos: "50% 40%", name: "Văn Phòng Ấp Tân Lập", ap: "Tân Lập", category: "Cơ quan hành chính", coords: "10°21'56.1\"N 105°05'13.1\"E", latLng: [10.365583, 105.086972], address: "Ấp Tân Lập, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tân Lập.", mapUrl: "https://www.google.com/maps?q=10.365583,105.086972" },
+          { id: 10, image: "images/tan-binh.jpg", imagePos: "50% 40%", name: "Văn Phòng Ấp Tân Bình", ap: "Tân Bình", category: "Cơ quan hành chính", coords: "10°25'51.5\"N 105°06'44.5\"E", latLng: [10.430972, 105.112361], address: "Ấp Tân Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tân Bình.", mapUrl: "https://www.google.com/maps?q=10.430972,105.112361" },
+          { id: 11, name: "Văn Phòng Ấp Tân Thạnh", ap: "Tân Thạnh", category: "Cơ quan hành chính", coords: "10°26'14.2\"N 105°05'30.5\"E", latLng: [10.437278, 105.091806], address: "Ấp Tân Thạnh, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Văn phòng làm việc và tiếp công dân ấp Tân Thạnh.", mapUrl: "https://www.google.com/maps?q=10.437278,105.091806" },
+          { id: 12, image: "images/cong-an.jpg", imagePos: "50% 50%", name: "Công An Xã Cô Tô", ap: "Tân Thạnh", category: "An ninh trật tự", coords: "10°26'10.1\"N 105°06'00.5\"E", latLng: [10.436139, 105.100139], address: "Ấp Tân Thạnh, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Trụ sở Công an xã Cô Tô - Đảm bảo an ninh trật tự địa bàn.", mapUrl: "https://www.google.com/maps?q=10.436139,105.100139" },
+          { id: 13, name: "Ủy Ban Nhân Dân Xã Cô Tô", ap: "Tô Bình", category: "Cơ quan hành chính", coords: "10°21'49.9\"N 105°00'55.7\"E", latLng: [10.363861, 105.015472], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Trụ sở Ủy ban Nhân dân xã Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.363861,105.015472" },
+          { id: 14, image: "images/mttq.jpg", imagePos: "50% 60%", name: "Ủy Ban Mặt Trận Tổ Quốc Cô Tô", ap: "Tô Bình", category: "Cơ quan hành chính", coords: "10°21'59.2\"N 105°00'58.0\"E", latLng: [10.366444, 105.016111], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Ủy ban Mặt trận Tổ quốc Việt Nam xã Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.366444,105.016111" },
+          { id: 15, name: "Ban chỉ huy Quân sự xã Cô Tô", ap: "Tân Đức", category: "An ninh - Quốc phòng", coords: "10°19'34.1\"N 105°04'36.5\"E", latLng: [10.326139, 105.076806], address: "Ấp Tân Đức, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Ban Chỉ huy Quân sự xã Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.326139,105.076806" },
+          { id: 16, image: "images/van-hoa-the-thao.jpg", imagePos: "50% 50%", name: "Trung tâm Văn hóa thể thao xã Cô Tô", ap: "Tân Đức", category: "Văn hóa - Thể thao", coords: "10°19'37.9\"N 105°04'30.7\"E", latLng: [10.327194, 105.075194], address: "Ấp Tân Đức, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Trung tâm Văn hóa - Thể thao xã Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.327194,105.075194" },
+          { id: 17, name: "Trung tâm y tế xã Cô Tô", ap: "Tô Bình", category: "Cơ sở y tế", coords: "10°21'43.9\"N 105°01'08.0\"E", latLng: [10.362194, 105.018889], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Trung tâm Y tế xã Cô Tô - Chăm sóc sức khỏe nhân dân.", mapUrl: "https://www.google.com/maps?q=10.362194,105.018889" },
+          { id: 18, image: "images/tieu-hoc-b-diem-2.jpg", imagePos: "50% 25%", name: "Điểm trường 2 Trường Tiểu học B Cô Tô", ap: "Tân Bình", category: "Trường học", coords: "10°25'21.4\"N 105°06'33.6\"E", latLng: [10.422611, 105.109333], address: "Ấp Tân Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm trường 2 Trường Tiểu học B Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.422611,105.109333" },
+          { id: 19, image: "images/tieu-hoc-b-phan-hieu.jpg", imagePos: "50% 40%", name: "Điểm phân hiệu Trường Tiểu học B Cô Tô", ap: "Cô Tô", category: "Trường học", coords: "10°26'15.4\"N 105°03'38.5\"E", latLng: [10.437611, 105.060694], address: "Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm phân hiệu Trường Tiểu học B Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.437611,105.060694" },
+          { id: 20, image: "images/tieu-hoc-b-diem-1.jpg", imagePos: "50% 30%", name: "Điểm Trường 1 Trường Tiểu học B Cô Tô", ap: "Tân Thạnh", category: "Trường học", coords: "10°26'11.9\"N 105°05'56.3\"E", latLng: [10.436639, 105.098972], address: "Ấp Tân Thạnh, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm Trường 1 Trường Tiểu học B Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.436639,105.098972" },
+          { id: 21, image: "images/tan-tuyen-diem-chinh.jpg", imagePos: "50% 50%", name: "Điểm chính Trường Tiểu học và THCS Tân Tuyến", ap: "Tân Tuyến", category: "Trường học", coords: "10°19'34.0\"N 105°04'34.4\"E", latLng: [10.326111, 105.076222], address: "Ấp Tân Tuyến, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm chính Trường Tiểu học và THCS Tân Tuyến.", mapUrl: "https://www.google.com/maps?q=10.326111,105.076222" },
+          { id: 22, image: "images/tan-tuyen-phan-hieu.jpg", imagePos: "50% 45%", name: "Điểm phân hiệu Trường Tiểu học và THCS Tân Tuyến", ap: "Tân Tuyến", category: "Trường học", coords: "10°19'39.8\"N 105°04'27.5\"E", latLng: [10.327722, 105.074306], address: "Ấp Tân Tuyến, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm phân hiệu Trường Tiểu học và THCS Tân Tuyến.", mapUrl: "https://www.google.com/maps?q=10.327722,105.074306" },
+          { id: 23, image: "images/tieu-hoc-b-diem-4.jpg", imagePos: "50% 40%", name: "Điểm 4 Trường tiểu học B Cô Tô", ap: "Cô Tô", category: "Trường học", coords: "10°24'26.7\"N 105°02'59.9\"E", latLng: [10.407417, 105.049972], address: "Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm 4 Trường tiểu học B Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.407417,105.049972" },
+          { id: 24, image: "images/tieu-hoc-a-diem-chinh.jpg", imagePos: "50% 45%", name: "Điểm chính Trường Tiểu học A Cô Tô", ap: "Tô Bình", category: "Trường học", coords: "10°21'44.0\"N 105°00'56.8\"E", latLng: [10.362222, 105.015778], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm chính Trường Tiểu học A Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.362222,105.015778" },
+          { id: 25, image: "images/tieu-hoc-a-phan-hieu.jpg", imagePos: "50% 40%", name: "Điểm phân hiệu Trường Tiểu học A Cô Tô", ap: "Huệ Đức", category: "Trường học", coords: "10°20'54.4\"N 105°02'28.7\"E", latLng: [10.348444, 105.041306], address: "Ấp Huệ Đức, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm phân hiệu Trường Tiểu học A Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.348444,105.041306" },
+          { id: 26, name: "Điểm trường 1 Trường Tiểu học A Cô Tô", ap: "Tô Lợi", category: "Trường học", coords: "10°23'15.9\"N 105°00'39.9\"E", latLng: [10.38775, 105.011083], address: "Ấp Tô Lợi, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm trường 1 Trường Tiểu học A Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.38775,105.011083" },
+          { id: 27, image: "images/thcs-thpt-co-to.jpg", imagePos: "50% 35%", name: "Trường THCS và THPT Cô Tô", ap: "Tô Bình", category: "Trường học", coords: "10°21'45.6\"N 105°00'56.3\"E", latLng: [10.362667, 105.015639], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Trường THCS và THPT Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.362667,105.015639" },
+          { id: 28, image: "images/mam-non-diem-chinh.jpg", imagePos: "50% 40%", name: "Điểm chính Trường Mầm Non Cô Tô", ap: "Tô Bình", category: "Trường học", coords: "10°21'49.1\"N 105°00'55.1\"E", latLng: [10.363639, 105.015306], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm chính Trường Mầm Non Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.363639,105.015306" },
+          { id: 29, image: "images/mam-non-phan-hieu-1.jpg", imagePos: "50% 60%", name: "Điểm phân hiệu 1 Trường Mầm non Cô Tô", ap: "Tân Tuyến", category: "Trường học", coords: "10°20'02.6\"N 105°03'54.3\"E", latLng: [10.334056, 105.065083], address: "Ấp Tân Tuyến, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở giáo dục: Điểm phân hiệu 1 Trường Mầm non Cô Tô.", mapUrl: "https://www.google.com/maps?q=10.334056,105.065083" },
+          { id: 30, name: "Chợ Cô Tô", ap: "Tô Bình", category: "Thương mại - Dịch vụ", coords: "10°21'49.8\"N 105°00'58.2\"E", latLng: [10.363833, 105.016167], address: "Ấp Tô Bình, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Chợ Cô Tô - Trung tâm thương mại và giao thương địa phương.", mapUrl: "https://www.google.com/maps?q=10.363833,105.016167" },
+          { id: 31, image: "images/giao-xu-tan-tuyen.jpg", imagePos: "50% 50%", name: "Giáo Xứ Tân Tuyến", ap: "Tân Tuyến", category: "Cơ sở tôn giáo", coords: "10°19'60.0\"N 105°03'58.8\"E", latLng: [10.333333, 105.066333], address: "Ấp Tân Tuyến, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở tôn giáo, tín ngưỡng: Giáo Xứ Tân Tuyến.", mapUrl: "https://www.google.com/maps?q=10.333333,105.066333" },
+          { id: 32, name: "Chùa Sóc Triết", ap: "Sóc Triết", category: "Cơ sở tôn giáo", coords: "10°21'56.4\"N 105°00'58.3\"E", latLng: [10.365667, 105.016194], address: "Ấp Sóc Triết, Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở tôn giáo, tín ngưỡng: Chùa Sóc Triết.", mapUrl: "https://www.google.com/maps?q=10.365667,105.016194" },
+          { id: 33, name: "Chùa mới (WAT PRASATH PHOS)", ap: "Cô Tô", category: "Cơ sở tôn giáo", coords: "10°22'32.0\"N 105°00'52.5\"E", latLng: [10.375556, 105.014583], address: "Xã Cô Tô, Huyện Tri Tôn, An Giang", shortDesc: "Cơ sở tôn giáo, tín ngưỡng: Chùa mới (WAT PRASATH PHOS).", mapUrl: "https://www.google.com/maps?q=10.375556,105.014583" }
+        ];
+
+        // -------------------------------------------------------------------------
+        // TẠO DANH SÁCH BỘ LỌC TỰ ĐỘNG TỪ DỮ LIỆU
+        // -------------------------------------------------------------------------
+        function fillSelect(selectId, values, labelFn) {
+            const sel = document.getElementById(selectId);
+            [...new Set(values)].sort((a, b) => a.localeCompare(b, 'vi')).forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = labelFn ? labelFn(v) : v;
+                sel.appendChild(opt);
+            });
+        }
+
+        fillSelect('apFilter', locations.map(l => l.ap), v => v === 'Cô Tô' ? 'Xã Cô Tô (chưa rõ ấp)' : 'Ấp ' + v);
+        fillSelect('categoryFilter', locations.map(l => l.category));
+
+        // -------------------------------------------------------------------------
+        // HIỂN THỊ DANH SÁCH
+        // -------------------------------------------------------------------------
+        function renderLocations(data) {
+            const listEl = document.getElementById('locationList');
+            listEl.innerHTML = '';
+            document.getElementById('resultCount').textContent = 'Hiển thị ' + data.length + '/' + locations.length + ' địa điểm';
+
+            if (data.length === 0) {
+                listEl.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">Không tìm thấy địa điểm phù hợp.</p>';
+                return;
+            }
+
+            data.forEach(item => {
+                const apLabel = item.ap === 'Cô Tô' ? 'Xã Cô Tô' : 'Ấp ' + item.ap;
+                const dirUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + item.latLng[0] + ',' + item.latLng[1];
+                const card = document.createElement('div');
+                card.className = 'card';
+                const imgHtml = item.image
+                    ? `<img src="${item.image}" alt="${item.name}" class="card-img" style="object-position:${item.imagePos || 'center'}" loading="lazy" onerror="this.style.display='none'">`
+                    : '';
+                card.innerHTML = `
+                    ${imgHtml}
+                    <div class="card-body">
+                        <h3>${item.name}</h3>
+                        <div class="badges">
+                            <span class="badge badge-ap">📍 ${apLabel}</span>
+                            <span class="badge">${item.category}</span>
+                        </div>
+                        <div class="info-item">🏠 <span><strong>Địa chỉ:</strong> ${item.address}</span></div>
+                        <div class="info-item">🧭 <span><strong>Tọa độ:</strong> ${item.coords}</span></div>
+                        <p class="desc">${item.shortDesc}</p>
+                        <div class="btn-row">
+                            <a href="${item.mapUrl}" target="_blank" rel="noopener" class="btn btn-maps">🗺️ Xem bản đồ</a>
+                            <a href="${dirUrl}" target="_blank" rel="noopener" class="btn btn-dir">➡️ Chỉ đường</a>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        // -------------------------------------------------------------------------
+        // LỌC VÀ TÌM KIẾM
+        // -------------------------------------------------------------------------
+        function filterData() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+            const selectedAp = document.getElementById('apFilter').value;
+            const selectedCategory = document.getElementById('categoryFilter').value;
+
+            const filtered = locations.filter(item => {
+                const matchText = item.name.toLowerCase().includes(searchText) ||
+                                  item.category.toLowerCase().includes(searchText) ||
+                                  item.shortDesc.toLowerCase().includes(searchText);
+                const matchAp = selectedAp === "" || item.ap === selectedAp;
+                const matchCategory = selectedCategory === "" || item.category === selectedCategory;
+                return matchText && matchAp && matchCategory;
+            });
+
+            renderLocations(filtered);
+        }
+
+        renderLocations(locations);
+    </script>
+</body>
+</html>
